@@ -107,46 +107,18 @@ function M.clear_tab(tab_id)
 	notified_tabs[tostring(tab_id)] = nil
 end
 
--- ============================================================
--- Bell origin tracking (prevent clearing while still on the pane)
--- ============================================================
-local bell_origin_panes = {}
-local has_left_pane = {}
-
 function M.clear_active_tab(window)
-	local p = window:active_pane()
-	if not p then
+	local tab = window:mux_window():active_tab()
+	if not tab then
 		return
 	end
-	local pk = tostring(p:pane_id())
-
-	if bell_origin_panes[pk] and not has_left_pane[pk] then
-		return
-	end
-
-	if bell_origin_panes[pk] and has_left_pane[pk] then
-		bell_origin_panes[pk] = nil
-		has_left_pane[pk] = nil
-	end
-
-	for bpk, _ in pairs(bell_origin_panes) do
-		if bpk ~= pk then
-			has_left_pane[bpk] = true
-		end
-	end
-
-	local tid = notified_panes[pk]
-	if not tid then
-		return
-	end
-	notified_panes[pk] = nil
-	local tk = tostring(tid)
-	for _, v in pairs(notified_panes) do
-		if tostring(v) == tk then
-			return
-		end
-	end
+	local tk = tostring(tab:tab_id())
 	notified_tabs[tk] = nil
+	for pk, tid in pairs(notified_panes) do
+		if tostring(tid) == tk then
+			notified_panes[pk] = nil
+		end
+	end
 end
 
 -- ============================================================
@@ -212,20 +184,17 @@ end
 -- apply_to_config: main entry point
 -- ============================================================
 --- Options:
----   mods        : string   - keybinding modifier (default: "CTRL|SHIFT")
----   key         : string   - keybinding key (default: "phys:n")
----   play_sound  : boolean  - play beep on notification (default: true)
----   toast       : boolean  - show OS toast notification (default: true)
----   toast_title : string   - toast notification title (default: "WezTerm")
+---   mods       : string  - keybinding modifier (default: "CTRL|SHIFT")
+---   key        : string  - keybinding key (default: "phys:n")
+---   play_sound : boolean - play beep on notification (default: true)
+---   toast      : boolean - show OS toast notification (default: true)
 function M.apply_to_config(config, opts)
 	opts = opts or {}
 	local play_sound = opts.play_sound ~= false
 	local toast = opts.toast ~= false
-	local toast_title = opts.toast_title or "WezTerm"
 
 	config.audible_bell = "Disabled"
 
-	-- Bell event: triggered by any process sending \a (bell character)
 	wezterm.on("bell", function(window, pane)
 		local tab = pane:tab()
 		if not tab then
@@ -239,22 +208,20 @@ function M.apply_to_config(config, opts)
 			return
 		end
 
-		local mux_win = window:mux_window()
-		local active_tab = mux_win:active_tab()
-		local is_active = active_tab and active_tab:tab_id() == tab_id
+		-- Only notify for background panes (ignore bells from the active pane
+		-- such as zsh completions and other routine shell interactions)
+		local active_pane = window:active_pane()
+		local is_active_pane = active_pane and active_pane:pane_id() == pane:pane_id()
+		if is_active_pane then
+			return
+		end
 
 		local pane_text = get_pane_text(pane)
 		add_notification(tab_id, pane:pane_id(), title, "completed", pane_text)
 		notified_tabs[tostring(tab_id)] = true
 
-		local pk = tostring(pane:pane_id())
-		if is_active then
-			bell_origin_panes[pk] = true
-			has_left_pane[pk] = nil
-		end
-
 		if toast then
-			window:toast_notification(toast_title, title .. " - completed")
+			window:toast_notification("WezTerm", title .. " - completed")
 		end
 		window:set_right_status("")
 
@@ -278,7 +245,7 @@ function M.apply_to_config(config, opts)
 			add_notification(tab_id, pane:pane_id(), title, body, pane_text)
 
 			if toast then
-				window:toast_notification(toast_title, title .. " - " .. body)
+				window:toast_notification("WezTerm", title .. " - " .. body)
 			end
 			if play_sound then
 				wezterm.background_child_process({ "osascript", "-e", "beep" })
