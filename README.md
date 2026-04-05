@@ -1,5 +1,7 @@
 # wezterm-notify
 
+[日本語](docs/README.ja.md)
+
 A WezTerm plugin that provides a notification system for long-running commands. When a process sends a bell character (`\a`) or a custom user-var, the plugin captures the pane content and displays notifications with toast alerts, tab indicators, and an interactive notification viewer.
 
 ## Features
@@ -44,8 +46,18 @@ notify.apply_to_config(config, {
   play_sound = true,     -- Play beep sound on notification (default: true)
   toast = true,          -- Show OS toast notification (default: true)
   toast_title = "WezTerm", -- Toast notification title (default: "WezTerm")
+  notify_processes = {   -- Whitelist of process names to notify on bell (default: nil = all)
+    "claude",            --   Only these processes trigger bell notifications.
+    "make",              --   Matches against the basename of the foreground process.
+    "cargo",             --   When nil or empty, all bell events trigger notifications.
+    "npm",
+    "docker",
+    "python",
+  },
 })
 ```
+
+> **Note**: `notify_processes` filters only bell-based notifications. Custom notifications via `WEZTERM_NOTIFY` user-var are always delivered regardless of this setting.
 
 ## Tab indicator
 
