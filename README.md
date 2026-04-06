@@ -98,13 +98,27 @@ printf '\033]1337;SetUserVar=%s=%s\007' 'WEZTERM_NOTIFY' "$(printf '%s' 'Task co
 
 ### Claude Code
 
-Add a [Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks) to send a bell when Claude Code finishes:
+Add [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) to send a bell when Claude Code finishes or needs your attention:
+
+- **Stop** — fires when Claude Code completes a task
+- **Notification** — fires when Claude Code is waiting for user input (e.g. permission prompts)
 
 **`~/.claude/settings.json`**:
 
 ```json
 {
   "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TTY=$(pid=$$; while [ \"$pid\" != \"1\" ]; do t=$(ps -o tty= -p \"$pid\" 2>/dev/null | tr -d ' '); if [ -n \"$t\" ] && [ \"$t\" != \"??\" ] && [ \"$t\" != \"-\" ]; then echo \"/dev/$t\"; break; fi; pid=$(ps -o ppid= -p \"$pid\" 2>/dev/null | tr -d ' '); done); [ -n \"$TTY\" ] && printf '\\a' > \"$TTY\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
