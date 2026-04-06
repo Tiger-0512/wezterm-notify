@@ -28,7 +28,7 @@ Add to your `wezterm.lua`:
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
-local notify = wezterm.plugin.require("https://github.com/<your-username>/wezterm-notify")
+local notify = wezterm.plugin.require("https://github.com/Tiger-0512/wezterm-notify")
 
 -- ... your other config ...
 
@@ -45,19 +45,8 @@ notify.apply_to_config(config, {
   key = "phys:n",        -- Keybinding key (default: "phys:n")
   play_sound = true,     -- Play beep sound on notification (default: true)
   toast = true,          -- Show OS toast notification (default: true)
-  toast_title = "WezTerm", -- Toast notification title (default: "WezTerm")
-  notify_processes = {   -- Whitelist of process names to notify on bell (default: nil = all)
-    "claude",            --   Only these processes trigger bell notifications.
-    "make",              --   Matches against the basename of the foreground process.
-    "cargo",             --   When nil or empty, all bell events trigger notifications.
-    "npm",
-    "docker",
-    "python",
-  },
 })
 ```
-
-> **Note**: `notify_processes` filters only bell-based notifications. Custom notifications via `WEZTERM_NOTIFY` user-var are always delivered regardless of this setting.
 
 ## Tab indicator
 
@@ -84,7 +73,7 @@ end)
 
 ### Bell notifications
 
-Any process that sends a bell character (`\a`) to the terminal triggers a notification. This is the standard Unix mechanism for signaling command completion.
+When a background pane sends a bell character (`\a`), it triggers a notification. Bells from the currently active pane are ignored to suppress noise from routine shell interactions (e.g. zsh completions). This is the standard Unix mechanism for signaling command completion.
 
 ```bash
 # Notify when a long command finishes

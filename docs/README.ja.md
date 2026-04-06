@@ -43,19 +43,8 @@ notify.apply_to_config(config, {
   key = "phys:n",        -- 通知ビューアのキー（デフォルト: "phys:n"）
   play_sound = true,     -- 通知時にビープ音を鳴らす（デフォルト: true）
   toast = true,          -- OSトースト通知を表示する（デフォルト: true）
-  toast_title = "WezTerm", -- トースト通知のタイトル（デフォルト: "WezTerm"）
-  notify_processes = {   -- bell通知のプロセスホワイトリスト（デフォルト: nil = 全プロセス）
-    "claude",            --   指定したプロセスからのbellのみ通知されます。
-    "make",              --   フォアグラウンドプロセスのbasename（ファイル名部分）と照合されます。
-    "cargo",             --   nilまたは空の場合、全てのbell通知がトリガーされます。
-    "npm",
-    "docker",
-    "python",
-  },
 })
 ```
-
-> **注意**: `notify_processes` はbell通知のみをフィルタリングします。`WEZTERM_NOTIFY` user-var経由のカスタム通知は、この設定に関係なく常に配信されます。
 
 ## タブインジケータ
 
@@ -82,7 +71,7 @@ end)
 
 ### bell通知
 
-ターミナルにbell文字（`\a`）を送信するプロセスが通知をトリガーします。これはコマンド完了を通知するための標準的なUnixの仕組みです。
+バックグラウンドのペインがbell文字（`\a`）を送信すると通知がトリガーされます。アクティブペインからのbellは、zsh補完などの日常的なシェル操作によるノイズを抑制するため無視されます。これはコマンド完了を通知するための標準的なUnixの仕組みです。
 
 ```bash
 # 長時間コマンドの完了時に通知
